@@ -1,0 +1,107 @@
+[
+    {
+        "author": "Warren Buffett",
+        "author_cn": "巴菲特",
+        "content": "Investment is simple, but not easy.",
+        "content_cn": "投资很简单，但并不容易。",
+        "tags": ["general", "psychology"]
+    },
+    {
+        "author": "Warren Buffett",
+        "author_cn": "巴菲特",
+        "content": "Price is what you pay. Value is what you get.",
+        "content_cn": "价格是你付出的，价值是你得到的。",
+        "tags": ["valuation", "price"]
+    },
+    {
+        "author": "Warren Buffett",
+        "author_cn": "巴菲特",
+        "content": "A truly great business must have an enduring 'moat' that protects excellent returns on invested capital.",
+        "content_cn": "一家真正伟大的公司必须有一条坚固持久的‘护城河’，保护它的高收益。",
+        "tags": ["moat", "business_model"]
+    },
+    {
+        "author": "Warren Buffett",
+        "author_cn": "巴菲特",
+        "content": "Time is the friend of the wonderful company, the enemy of the mediocre.",
+        "content_cn": "时间是好公司的朋友，是平庸公司的敌人。",
+        "tags": ["time", "quality"]
+    },
+     {
+        "author": "Warren Buffett",
+        "author_cn": "巴菲特",
+        "content": "Good business, easy decisions; bad business, painful decisions.",
+        "content_cn": "好生意，每个决定都简单，想都不用想；烂生意，每个决定都困难，总是进退维谷、步履维艰。",
+        "tags": ["business_model", "decision_making"]
+    },
+    {
+        "author": "Charlie Munger",
+        "author_cn": "查理·芒格",
+        "content": "Invert, always invert.",
+        "content_cn": "反过来想，总是反过来想。",
+        "tags": ["thinking_model", "inversion"]
+    },
+    {
+        "author": "Charlie Munger",
+        "author_cn": "查理·芒格",
+        "content": "The big money is not in the buying and selling, but in the waiting.",
+        "content_cn": "赚大钱的诀窍不在于买进卖出，而在于等待。",
+        "tags": ["patience", "long_term"]
+    },
+    {
+        "author": "Charlie Munger",
+        "author_cn": "查理·芒格",
+        "content": "A good business is not afraid of bad management.",
+        "content_cn": "好生意不怕管理差。",
+        "tags": ["business_model", "management"]
+    },
+    {
+        "author": "Duan Yongping",
+        "author_cn": "段永平",
+        "content": "Doing the right thing is the precondition, doing things right is the capability.",
+        "content_cn": "做对的事情是前提，把事情做对是能力。",
+        "tags": ["strategy", "execution"]
+    },
+    {
+        "author": "Duan Yongping",
+        "author_cn": "段永平",
+        "content": "Stop doing wrong things is the fastest way to do right things.",
+        "content_cn": "停止做错的事情，就是做对的事情最快的方法。",
+        "tags": ["stop_loss", "correction"]
+    },
+    {
+        "author": "Duan Yongping",
+        "author_cn": "段永平",
+        "content": "Investment is simply buying a company's future cash flow discounted to the present.",
+        "content_cn": "投资就是买一家公司未来现金流的折现。",
+        "tags": ["valuation", "cash_flow"]
+    },
+    {
+        "author": "Duan Yongping",
+        "author_cn": "段永平",
+        "content": "Focus on the business itself, not the stock price.",
+        "content_cn": "关注生意本身，而不是股价。",
+        "tags": ["focus", "business"]
+    },
+     {
+        "author": "Duan Yongping",
+        "author_cn": "段永平",
+        "content": "If you understand the business, you don't need diversification. If you don't, diversification won't help you.",
+        "content_cn": "如果你懂生意，你不需要分散投资；如果你不懂，分散投资也帮不了你。",
+        "tags": ["concentration", "risk"]
+    },
+    {
+        "author": "Wang Ning",
+        "author_cn": "王宁",
+        "content": "We think our consumption behavior is highly rational... but in fact, we are far more emotional than we imagine. You get anxious if you leave the faucet on, but you don't care that the fountain wastes more water.",
+        "content_cn": "我们以为自己的消费行为是高度理性的，但实际上，我们远比自己想象的要更感性。水龙头没关你会焦虑，但喷泉流了更多的水，你却不会在意。",
+        "tags": ["consumer_psychology", "business_model", "pop_mart"]
+    },
+    {
+        "author": "Wang Ning",
+        "author_cn": "王宁",
+        "content": "Perhaps in ten years, buying our products will be like buying an ice cream, a more daily kind of happiness.",
+        "content_cn": "也许十年后，买我们的产品就像买一个冰淇淋一样，是一种更为日常的快乐。",
+        "tags": ["vision", "happiness", "pop_mart"]
+    }
+]

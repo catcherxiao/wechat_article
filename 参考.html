@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WeChat Writer Pro - 公众号写作工具</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --apple-blue: #0071e3;
+            --apple-blue-hover: #0077ed;
+            --apple-dark: #1d1d1f;
+            --apple-gray: #86868b;
+            --apple-bg: #f5f5f7;
+            --apple-card: #ffffff;
+            --apple-border: #d2d2d7;
+            --radius-lg: 18px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--apple-bg);
+            color: var(--apple-dark);
+            line-height: 1.47059;
+            font-weight: 400;
+            letter-spacing: -0.022em;
+            overflow-x: hidden;
+        }
+        
+        /* 玻璃拟态导航栏 */
+        .nav-glass {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 52px;
+            background: rgba(255, 255, 255, 0.72);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 40px;
+        }
+        
+        .nav-links { display: flex; gap: 32px; }
+        .nav-link {
+            font-size: 12px;
+            color: var(--apple-dark);
+            text-decoration: none;
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+        .nav-link:hover { opacity: 1; }
+        .nav-brand {
+            font-size: 14px;
+            font-weight: 600;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .nav-actions { display: flex; gap: 20px; }
+        .nav-action {
+            font-size: 12px;
+            color: var(--apple-blue);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        /* 页面容器 */
+        .page {
+            min-height: 100vh;
+            padding-top: 52px;
+            display: none;
+        }
+        .page.active { display: block; }
+        
+        /* Hero Section - 苹果风格 */
+        .hero {
+            text-align: center;
+            padding: 80px 20px 60px;
+            max-width: 980px;
+            margin: 0 auto;
+        }
+        .hero-title {
+            font-size: 56px;
+            font-weight: 700;
+            letter-spacing: -0.021em;
+            margin-bottom: 16px;
+            color: var(--apple-dark);
+        }
+        .hero-subtitle {
+            font-size: 21px;
+            color: var(--apple-gray);
+            font-weight: 400;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.381;
+        }
+        
+        /* 主内容区 */
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 40px 80px;
+        }
+        
+        /* Input 页面布局 */
+        .input-layout {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 40px;
+            margin-top: 40px;
+        }
+        
+        /* 苹果风格卡片 */
+        .apple-card {
+            background: var(--apple-card);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+            padding: 32px;
+            border: 1px solid rgba(0, 0, 0, 0.04);
+        }
+        
+        .input-textarea {
+            width: 100%;
+            min-height: 400px;
+            border: 1px solid var(--apple-border);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            font-size: 17px;
+            font-family: inherit;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.3s;
+            background: var(--apple-bg);
+        }
+        .input-textarea:focus { border-color: var(--apple-blue); }
+        .input-textarea::placeholder { color: var(--apple-gray); opacity: 0.6; }
+        
+        .section-label {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--apple-dark);
+            display: block;
+        }
+        
+        /* 配置面板 */
+        .config-group {
+            margin-bottom: 24px;
+        }
+        .config-input {
+            width: 100%;
+            padding: 16px;
+            border: 1px solid var(--apple-border);
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            background: var(--apple-bg);
+            transition: all 0.3s;
+        }
+        .config-input:focus {
+            outline: none;
+            border-color: var(--apple-blue);
+            background: white;
+        }
+        
+        /* Tags */
+        .tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .tag {
+            padding: 8px 16px;
+            background: white;
+            border: 1px solid var(--apple-border);
+            border-radius: 100px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s;
+            user-select: none;
+        }
+        .tag:hover { border-color: var(--apple-blue); color: var(--apple-blue); }
+        .tag.active {
+            background: var(--apple-dark);
+            color: white;
+            border-color: var(--apple-dark);
+        }
+        
+        /* 苹果风格大按钮 */
+        .btn-apple {
+            display: inline-block;
+            padding: 18px 40px;
+            background: var(--apple-blue);
+            color: white;
+            text-decoration: none;
+            border-radius: 980px;
+            font-size: 17px;
+            font-weight: 400;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+        .btn-apple:hover {
+            background: var(--apple-blue-hover);
+            transform: scale(1.02);
+        }
+        .btn-block { width: 100%; margin-top: 32px; }
+        
+        .helper-text {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: var(--apple-gray);
+        }
+        
+        /* Refine 页面 - 深色模式 */
+        .dark-mode {
+            background: #000000;
+            color: white;
+        }
+        .dark-mode .nav-glass {
+            background: rgba(29, 29, 31, 0.72);
+            border-bottom-color: rgba(255, 255, 255, 0.08);
+        }
+        .dark-mode .nav-link { color: white; opacity: 0.8; }
+        .dark-mode .nav-brand { color: white; }
+        
+        .edit-toolbar {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 16px 32px;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            border-radius: var(--radius-md);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .toolbar-left { display: flex; gap: 32px; }
+        .toolbar-item {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        .toolbar-item:hover, .toolbar-item.active { color: white; }
+        .toolbar-item.primary { color: var(--apple-blue); font-weight: 600; }
+        
+        .edit-layout {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            padding: 0 40px;
+            height: calc(100vh - 220px);
+        }
+        .edit-panel {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow-y: auto;
+        }
+        .edit-panel.active {
+            border-color: var(--apple-blue);
+            background: rgba(0, 113, 227, 0.05);
+        }
+        .panel-title {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 20px;
+            color: rgba(255, 255, 255, 0.4);
+        }
+        .edit-panel.active .panel-title { color: var(--apple-blue); }
+        
+        /* 文本行模拟 */
+        .text-line {
+            height: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            margin-bottom: 12px;
+        }
+        .text-line.short { width: 70%; }
+        
+        /* AI 高亮块 */
+        .ai-highlight {
+            background: rgba(0, 113, 227, 0.15);
+            border-left: 3px solid var(--apple-blue);
+            padding: 16px;
+            border-radius: 0 8px 8px 0;
+            margin: 16px 0;
+            position: relative;
+        }
+        .ai-highlight .text-line { background: rgba(255, 255, 255, 0.3); }
+        
+        /* 悬浮工具栏 */
+        .floating-toolbar {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(66, 66, 69, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 12px 24px;
+            border-radius: 12px;
+            display: flex;
+            gap: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 100;
+        }
+        .tool-btn {
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+        .tool-btn:hover { background: rgba(255, 255, 255, 0.1); }
+        .tool-divider {
+            width: 1px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        /* 底部确认栏 */
+        .confirm-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            z-index: 99;
+        }
+        .btn-confirm {
+            padding: 14px 48px;
+            background: var(--apple-blue);
+            color: white;
+            border: none;
+            border-radius: 980px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-confirm:hover { transform: scale(1.05); background: var(--apple-blue-hover); }
+        
+        /* Output 页面 */
+        .output-layout {
+            max-width: 1200px;
+            margin: 60px auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            padding: 0 40px;
+            align-items: start;
+        }
+        
+        /* iPhone Mockup */
+        .device-mockup {
+            width: 320px;
+            height: 650px;
+            background: #1d1d1f;
+            border-radius: 50px;
+            padding: 12px;
+            margin: 0 auto;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            position: relative;
+        }
+        .device-screen {
+            width: 100%;
+            height: 100%;
+            background: white;
+            border-radius: 40px;
+            overflow: hidden;
+            position: relative;
+        }
+        .notch {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 30px;
+            background: #1d1d1f;
+            border-radius: 0 0 20px 20px;
+            z-index: 10;
+        }
+        .wechat-content {
+            padding: 50px 20px 20px;
+            height: 100%;
+            overflow-y: auto;
+        }
+        .wechat-title {
+            font-size: 18px;
+            font-weight: 700;
+            line-height: 1.4;
+            margin-bottom: 12px;
+            color: var(--apple-dark);
+        }
+        .wechat-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--apple-gray);
+            margin-bottom: 20px;
+        }
+        .avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--apple-blue);
+        }
+        .wechat-img {
+            width: 100%;
+            height: 160px;
+            background: var(--apple-bg);
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+        
+        /* 输出选项 */
+        .output-options { padding-top: 40px; }
+        .option-group { margin-bottom: 32px; }
+        .option-label {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: block;
+            color: var(--apple-dark);
+        }
+        
+        .btn-secondary {
+            width: 100%;
+            padding: 16px;
+            background: white;
+            border: 1px solid var(--apple-border);
+            border-radius: var(--radius-md);
+            font-size: 15px;
+            color: var(--apple-dark);
+            cursor: pointer;
+            margin-bottom: 12px;
+            transition: all 0.3s;
+        }
+        .btn-secondary:hover { border-color: var(--apple-blue); color: var(--apple-blue); }
+        
+        .format-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .format-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            background: white;
+            border: 1px solid var(--apple-border);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .format-item:hover { border-color: var(--apple-blue); }
+        .format-item.active { border-color: var(--apple-blue); background: rgba(0, 113, 227, 0.02); }
+        
+        .radio {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--apple-gray);
+            border-radius: 50%;
+            position: relative;
+        }
+        .format-item.active .radio { border-color: var(--apple-blue); }
+        .format-item.active .radio::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 10px;
+            height: 10px;
+            background: var(--apple-blue);
+            border-radius: 50%;
+        }
+        
+        /* Toast 提示 */
+        .toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--apple-blue);
+            color: white;
+            padding: 30px 50px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 113, 227, 0.3);
+            z-index: 2000;
+            display: none;
+        }
+        .toast.show { display: block; animation: fadeIn 0.3s ease; }
+        .toast-icon { font-size: 40px; margin-bottom: 8px; }
+        .toast-text { font-size: 17px; font-weight: 600; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translate(-50%, -40%); }
+            to { opacity: 1; transform: translate(-50%, -50%); }
+        }
+        
+        /* 页面切换按钮（演示用） */
+        .demo-controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 12px;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 8px;
+            z-index: 3000;
+        }
+        .demo-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--apple-border);
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+        .demo-btn:hover { background: var(--apple-bg); }
+        .demo-btn.active { background: var(--apple-blue); color: white; border-color: var(--apple-blue); }
+    </style>
+</head>
+<body>
+
+    <!-- 玻璃拟态导航栏 -->
+    <nav class="nav-glass">
+        <div class="nav-links">
+            <a href="#" class="nav-link">文件</a>
+            <a href="#" class="nav-link">编辑</a>
+            <a href="#" class="nav-link">视图</a>
+            <a href="#" class="nav-link">窗口</a>
+            <a href="#" class="nav-link">帮助</a>
+        </div>
+        <div class="nav-brand">WeChat Writer Pro</div>
+        <div class="nav-actions">
+            <a href="#" class="nav-action">搜索</a>
+            <a href="#" class="nav-action">登录</a>
+        </div>
+    </nav>
+
+    <!-- 页面 1: Input -->
+    <div class="page active" id="page-input">
+        <div class="hero">
+            <h1 class="hero-title">创作，从输入开始。</h1>
+            <p class="hero-subtitle">输入原文，定义约束，让 AI 为你优化公众号文章。</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="input-layout">
+                <div class="apple-card">
+                    <label class="section-label">原文文稿</label>
+                    <textarea class="input-textarea" placeholder="在此粘贴或输入您的公众号文章草稿...&#10;&#10;支持 Markdown 格式，可直接粘贴微信文章链接"></textarea>
+                </div>
+                
+                <div>
+                    <div class="apple-card" style="margin-bottom: 20px;">
+                        <label class="section-label">创作配置</label>
+                        
+                        <div class="config-group">
+                            <label style="font-size: 13px; color: var(--apple-gray); margin-bottom: 6px; display: block;">必须保留的句子/信息</label>
+                            <input type="text" class="config-input" placeholder="数据、引用、关键结论...">
+                        </div>
+                        
+                        <div class="config-group">
+                            <label style="font-size: 13px; color: var(--apple-gray); margin-bottom: 6px; display: block;">希望扩写的重点</label>
+                            <input type="text" class="config-input" placeholder="背景、案例、细节描述...">
+                        </div>
+                        
+                        <label class="section-label" style="margin-top: 24px;">风格标签</label>
+                        <div class="tags-container">
+                            <span class="tag active">专业严谨</span>
+                            <span class="tag">轻松易懂</span>
+                            <span class="tag">数据驱动</span>
+                            <span class="tag">故事叙述</span>
+                        </div>
+                    </div>
+                    
+                    <button class="btn-apple btn-block" onclick="switchPage('page-refine')">生成 AI 草稿</button>
+                    <p class="helper-text">支持 Markdown · 实时保存 · 端到端加密</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页面 2: Refine (深色模式) -->
+    <div class="page dark-mode" id="page-refine">
+        <div class="hero" style="padding-bottom: 30px;">
+            <h1 class="hero-title">精炼与编辑</h1>
+            <p class="hero-subtitle" style="color: rgba(255,255,255,0.6);">对照查看 AI 优化建议，一键采纳或重写。</p>
+        </div>
+        
+        <div class="edit-toolbar">
+            <div class="toolbar-left">
+                <span class="toolbar-item">原文对照</span>
+                <span class="toolbar-item active primary">采纳所有</span>
+                <span class="toolbar-item">重写选中</span>
+                <span class="toolbar-item">撤销</span>
+                <span class="toolbar-item">设置</span>
+            </div>
+            <div style="font-size: 13px; color: rgba(255,255,255,0.4);">已保存 2 分钟前</div>
+        </div>
+        
+        <div class="edit-layout">
+            <div class="edit-panel">
+                <div class="panel-title">原始文稿</div>
+                <div class="text-line"></div>
+                <div class="text-line short"></div>
+                <div class="text-line"></div>
+                <div class="text-line" style="width: 85%;"></div>
+                <div style="height: 30px;"></div>
+                <div class="text-line"></div>
+                <div class="text-line"></div>
+                <div class="text-line short"></div>
+            </div>
+            
+            <div class="edit-panel active">
+                <div class="panel-title">AI 优化稿</div>
+                <div class="ai-highlight">
+                    <div class="text-line"></div>
+                    <div class="text-line short"></div>
+                    <div class="text-line"></div>
+                </div>
+                <div class="text-line"></div>
+                <div class="text-line short"></div>
+                <div class="ai-highlight">
+                    <div class="text-line"></div>
+                    <div class="text-line"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 悬浮工具栏 -->
+        <div class="floating-toolbar">
+            <span class="tool-btn">B</span>
+            <span class="tool-btn">I</span>
+            <div class="tool-divider"></div>
+            <span class="tool-btn">链接</span>
+            <div class="tool-divider"></div>
+            <span class="tool-btn">重写 ▾</span>
+        </div>
+        
+        <!-- 底部确认栏 -->
+        <div class="confirm-bar">
+            <button class="btn-confirm" onclick="switchPage('page-output')">确认并自动排版 →</button>
+        </div>
+    </div>
+
+    <!-- 页面 3: Output -->
+    <div class="page" id="page-output">
+        <div class="hero">
+            <h1 class="hero-title">你的文章已准备就绪。</h1>
+            <p class="hero-subtitle">预览效果，一键复制到公众号后台。</p>
+        </div>
+        
+        <div class="output-layout">
+            <div class="device-mockup">
+                <div class="device-screen">
+                    <div class="notch"></div>
+                    <div class="wechat-content">
+                        <div class="wechat-title">文章标题示例：AI 时代的写作革命</div>
+                        <div class="wechat-meta">
+                            <div class="avatar"></div>
+                            <span>作者名称</span>
+                            <span>·</span>
+                            <span>刚刚</span>
+                        </div>
+                        <div class="wechat-img"></div>
+                        <div style="font-size: 16px; line-height: 1.8; color: #333;">
+                            <p style="margin-bottom: 16px;">这是一段示例文字，展示 AI 优化后的排版效果...</p>
+                        </div>
+                        <div class="wechat-img"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="output-options">
+                <div class="option-group">
+                    <label class="option-label">输出选项</label>
+                    <button class="btn-apple btn-block" onclick="showToast()" style="margin-top: 0; margin-bottom: 12px;">复制富文本</button>
+                    <button class="btn-secondary">查看 HTML 代码</button>
+                </div>
+                
+                <div class="option-group">
+                    <label class="option-label">导出格式</label>
+                    <div class="format-list">
+                        <div class="format-item">
+                            <span>Markdown</span>
+                            <div class="radio"></div>
+                        </div>
+                        <div class="format-item active">
+                            <span>HTML (微信公众号)</span>
+                            <div class="radio"></div>
+                        </div>
+                        <div class="format-item">
+                            <span>纯文本</span>
+                            <div class="radio"></div>
+                        </div>
+                        <div class="format-item">
+                            <span>PDF</span>
+                            <div class="radio"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast 提示 -->
+    <div class="toast" id="toast">
+        <div class="toast-icon">✓</div>
+        <div class="toast-text">已复制到剪贴板</div>
+    </div>
+
+    <!-- 演示控制按钮 -->
+    <div class="demo-controls">
+        <button class="demo-btn active" onclick="switchPage('page-input')">1. 输入</button>
+        <button class="demo-btn" onclick="switchPage('page-refine')">2. 编辑</button>
+        <button class="demo-btn" onclick="switchPage('page-output')">3. 输出</button>
+    </div>
+
+    <script>
+        function switchPage(pageId) {
+            // 隐藏所有页面
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            // 显示目标页面
+            document.getElementById(pageId).classList.add('active');
+            
+            // 更新演示按钮状态
+            document.querySelectorAll('.demo-btn').forEach((btn, index) => {
+                btn.classList.remove('active');
+                if (pageId === 'page-input' && index === 0) btn.classList.add('active');
+                if (pageId === 'page-refine' && index === 1) btn.classList.add('active');
+                if (pageId === 'page-output' && index === 2) btn.classList.add('active');
+            });
+            
+            // 滚动到顶部
+            window.scrollTo(0, 0);
+        }
+        
+        function showToast() {
+            const toast = document.getElementById('toast');
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+        
+        // Tag 切换交互
+        document.querySelectorAll('.tag').forEach(tag => {
+            tag.addEventListener('click', function() {
+                this.classList.toggle('active');
+            });
+        });
+        
+        // 格式选择交互
+        document.querySelectorAll('.format-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.format-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>
