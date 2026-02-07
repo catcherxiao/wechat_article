@@ -7,8 +7,9 @@ export default async function handler(req, res) {
   }
 
   try {
-    const body = req.body || {}
-    const baseUrl = body.baseUrl || process.env.NEWAPI_BASE_URL || 'https://api.newapi.pro/v1'
+    const { body } = req
+    // Default to yinli.one as per user preference
+    const baseUrl = body.baseUrl || process.env.NEWAPI_BASE_URL || 'https://yinli.one/v1'
     const apiKey = body.apiKey || process.env.NEWAPI_API_KEY
     const model = body.model
     const messages = body.messages

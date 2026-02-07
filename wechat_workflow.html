@@ -1169,7 +1169,7 @@
       });
 
       const callAI = async (prompt, onChunk) => {
-        const baseUrl = (localStorage.getItem("apiBaseUrl") || "https://api.newapi.pro/v1").trim();
+        const baseUrl = (localStorage.getItem("apiBaseUrl") || "https://yinli.one/v1").trim();
         const apiKey = (localStorage.getItem("apiKey") || "").trim();
         const model = (localStorage.getItem("apiModel") || "gemini-3-flash-preview-thinking").trim();
         const stream = typeof onChunk === 'function';
@@ -1246,7 +1246,7 @@
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                baseUrl: (baseUrl === "https://api.newapi.pro/v1" || !baseUrl) ? undefined : baseUrl,
+                baseUrl: (baseUrl === "https://yinli.one/v1" || !baseUrl) ? undefined : baseUrl,
                 apiKey: apiKey || undefined,
                 model,
                 messages: [{ role: "user", content: prompt }],
