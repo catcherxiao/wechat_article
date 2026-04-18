@@ -48,7 +48,7 @@
 用户  ❯ 输入草稿：收藏玩具变成悦己消费...
 
 系统  ❯ 生成结构化 Prompt，包含：
-      - 角色设定（方伟，价值投资者视角）
+      - 角色设定（价值投资者视角）
       - 思维模型（护城河分析、生意分类）
       - 相关语录引用（自动匹配）
       - 输出格式要求（Markdown、小标题、层层递进）
@@ -58,21 +58,53 @@
 
 ## 快速开始
 
-### 1. 本地运行
+### 1. 配置 API Key（重要）
+
+本项目需要配置 AI 平台的 API Key 才能正常使用。复制环境变量模板并填写你的密钥：
+
+```bash
+cp .env.example .env
+```
+
+编辑 `.env` 文件，配置以下任一种方式：
+
+**方式一：OpenAI 官方**
+```bash
+OPENAI_BASE_URL=https://api.openai.com/v1
+OPENAI_MODEL=gpt-5.4
+OPENAI_API_KEY=sk-your-openai-api-key
+```
+
+**方式二：兼容 OpenAI 格式的国内平台**
+```bash
+# 通义千问
+OPENAI_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+OPENAI_MODEL=qwen-max
+OPENAI_API_KEY=sk-your-qwen-api-key
+
+# 或 MiniMax
+OPENAI_BASE_URL=https://api.minimax.chat/v1
+OPENAI_MODEL=abab6.5s-chat
+OPENAI_API_KEY=your-minimax-api-key
+
+# 或其他兼容平台（如 DeepSeek、Moonshot 等）
+```
+
+### 2. 本地运行 CLI 工具
 
 ```bash
 # 克隆项目
 git clone https://github.com/catcherxiao/article_jike.git
 cd article_jike
 
-# 安装依赖（纯 Python 标准库，无需额外安装）
+# 运行交互模式
 python3 main.py
 
-# 交互模式
+# 或处理文件
 python3 main.py -i input/pop_mart_draft.txt -o output/prompt.txt
 ```
 
-### 2. 启动 Web 界面
+### 3. 启动 Web 界面
 
 ```bash
 # 方式一：Node.js 本地服务器
@@ -84,7 +116,7 @@ python3 -m http.server 8000
 # 访问 http://localhost:8000/wechat_workflow.html
 ```
 
-### 3. Vercel 一键部署
+### 4. Vercel 一键部署
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/catcherxiao/article_jike)
 
