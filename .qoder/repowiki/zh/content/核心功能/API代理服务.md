@@ -71,12 +71,12 @@ end
 **图表来源**
 - [api/proxy.js:1-119](file://api/proxy.js#L1-L119)
 - [local_server.js:1-204](file://local_server.js#L1-L204)
-- [wechat_workflow.html:1-800](file://wechat_workflow.html#L1-L800)
+- [wechat_workflow.html:1-200](file://wechat_workflow.html#L1-L200)
 
 **章节来源**
 - [api/proxy.js:1-119](file://api/proxy.js#L1-L119)
 - [local_server.js:1-204](file://local_server.js#L1-L204)
-- [wechat_workflow.html:1-800](file://wechat_workflow.html#L1-L800)
+- [wechat_workflow.html:1-200](file://wechat_workflow.html#L1-L200)
 
 ## 核心组件
 
@@ -119,7 +119,7 @@ end
 subgraph "API代理层"
 C[代理处理器<br/>api/proxy.js]
 D[状态处理器<br/>api/status.js]
-E[访问令牌验证<br/>Bearer Token]
+E[访问令牌验证<br/>多源令牌验证]
 F[流式响应处理<br/>SSE/ReadableStream]
 end
 subgraph "上游服务层"
@@ -203,7 +203,6 @@ Validator-->>Handler : true
 Handler->>Handler : 构建上游请求
 Handler->>Upstream : 转发请求
 Upstream-->>Handler : 返回响应
-Handler-->>Client : 返回结果
 else 令牌无效
 Validator-->>Handler : false
 Handler-->>Client : 401 Unauthorized
@@ -219,23 +218,33 @@ end
 
 ## 访问令牌验证机制
 
-### 令牌格式检查
+### 多源令牌验证架构
 
-系统支持多种令牌传递方式，确保最大的兼容性和安全性：
+系统实现了全新的多源令牌验证机制，支持三种不同的令牌传递方式，确保最大的兼容性和安全性：
 
-1. **Header令牌**：通过 `x-article-jike-access-token` 头部传递
-2. **Bearer令牌**：通过标准 `Authorization: Bearer <token>` 头部传递  
-3. **请求体令牌**：通过 `accessToken` 字段在JSON请求体中传递
+#### 1. 环境变量令牌
+- **ARTICLE_JIKE_ACCESS_TOKEN**: 主要访问令牌
+- **APP_ACCESS_TOKEN**: 备用访问令牌
 
-### 权限验证流程
+#### 2. HTTP头部令牌
+- **x-article-jike-access-token**: 自定义头部令牌
+- **Authorization: Bearer <token>**: 标准Bearer令牌
+
+#### 3. 请求体令牌
+- **accessToken**: JSON请求体中的令牌字段
+
+### 令牌验证流程
 
 ```mermaid
 flowchart TD
-Start([开始验证]) --> GetExpected["获取期望令牌"]
+Start([开始验证]) --> GetExpected["获取期望令牌<br/>ARTICLE_JIKE_ACCESS_TOKEN 或 APP_ACCESS_TOKEN"]
 GetExpected --> CheckEnv{"环境变量存在?"}
 CheckEnv --> |否| AllowAll["允许访问<br/>无令牌控制"]
-CheckEnv --> |是| GetRequest["获取请求令牌"]
-GetRequest --> Compare{"令牌匹配?"}
+CheckEnv --> |是| GetRequest["获取请求令牌<br/>按优先级顺序检查"]
+GetRequest --> Priority1["检查 x-article-jike-access-token"]
+Priority1 --> Priority2["检查 Authorization Bearer"]
+Priority2 --> Priority3["检查请求体 accessToken"]
+Priority3 --> Compare{"令牌匹配?"}
 Compare --> |是| GrantAccess["授权访问"]
 Compare --> |否| DenyAccess["拒绝访问<br/>401 Unauthorized"]
 AllowAll --> End([结束])
@@ -244,15 +253,16 @@ DenyAccess --> End
 ```
 
 **图表来源**
+- [api/proxy.js:1-10](file://api/proxy.js#L1-L10)
 - [api/proxy.js:12-21](file://api/proxy.js#L12-L21)
-- [api/proxy.js:5-10](file://api/proxy.js#L5-L10)
 
 ### 安全防护措施
 
-1. **多源令牌验证**：支持三种令牌传递方式，提高可用性
+1. **多层令牌验证**：支持三种令牌传递方式，提高系统的可用性和安全性
 2. **严格令牌比较**：使用精确字符串比较，避免模糊匹配
-3. **环境变量优先**：令牌配置通过环境变量管理，便于部署
-4. **日志记录**：详细的调试日志，便于问题排查
+3. **环境变量优先**：令牌配置通过环境变量管理，便于部署和安全控制
+4. **空令牌处理**：支持无令牌模式，便于开发和测试环境使用
+5. **详细日志记录**：详细的调试日志，便于问题排查和安全审计
 
 **章节来源**
 - [api/proxy.js:1-21](file://api/proxy.js#L1-L21)
@@ -340,6 +350,7 @@ SendError --> End
 
 系统移除了严格的域名白名单限制，支持自定义代理域名：
 
+**已移除的域名验证逻辑**：
 ```javascript
 // 移除的域名验证逻辑
 // const urlObj = new URL(baseUrl)
@@ -347,7 +358,7 @@ SendError --> End
 // const isAllowedHost = host === 'api.newapi.pro' || host.endsWith('.newapi.pro')
 ```
 
-这种设计允许用户使用自定义域名（如 `yinli.one`）进行代理，提高了灵活性。
+这种设计允许用户使用自定义域名（如 `yinli.one`）进行代理，提高了灵活性和可扩展性。
 
 **章节来源**
 - [api/proxy.js:35-37](file://api/proxy.js#L35-L37)
@@ -623,10 +634,16 @@ async function benchmark() {
 
 API代理服务是一个功能完整、架构清晰的现代化AI内容创作平台。其核心优势包括：
 
-1. **灵活的令牌验证机制**：支持多种令牌传递方式，确保安全性和可用性
+1. **灵活的多令牌验证机制**：支持多种令牌传递方式，确保安全性和可用性
 2. **高效的流式响应处理**：实现实时数据传输，提供优秀的用户体验
 3. **多提供商支持**：无缝集成OpenAI和NewAPI，支持自定义域名
 4. **完善的开发工具链**：包含本地开发服务器、Python工具和前端界面
 5. **可扩展的架构设计**：模块化设计便于功能扩展和维护
 
 该系统适用于需要代理AI服务的企业和个人开发者，提供了从开发到部署的完整解决方案。通过合理的配置和优化，可以满足各种规模的应用需求。
+
+**更新摘要**
+- 新增多令牌验证机制（Bearer tokens、自定义头部、环境访问密钥）
+- 移除域名白名单检查，增强访问控制灵活性
+- 改进令牌验证流程，支持更灵活的部署配置
+- 增强系统的安全性和可用性
