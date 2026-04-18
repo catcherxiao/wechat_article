@@ -53,18 +53,49 @@
 
 ## ✍️ 公众号写作与排版（沉淀版）
 
+`skill_wechat` 的写作方法论已经收口到本项目的 `prompts/` 目录。`article_jike` 作为唯一可运行入口，负责完成输入、改写、校验、排版与浏览器归档。
+
+### 策划标题与大纲（可选）
+- 模板：prompts/wechat_structuring_v1.md
+- 用法：把你的初稿替换 {{DRAFT_TEXT}}，可选填 {{MUST_KEEP}} 与 {{EXPAND_POINTS}}，让 AI 先输出核心判断、标题与大纲。
+
 ### 文本润色 / 改写 / 扩写
 - 模板：prompts/wechat_rewrite_v2.md
 - 用法：把你的初稿替换 {{DRAFT_TEXT}}，可选填 {{MUST_KEEP}} 与 {{EXPAND_POINTS}}，让 AI 输出 Markdown 成品。
 
+### 发布前校验
+- 模板：prompts/wechat_verify_v1.md
+- 用法：把最终 Markdown 替换 {{FINAL_TEXT}}，让 AI 做合规、真实性、去 AI 味三轮校验。
+
 ### 排版到公众号 HTML
 - 模板：prompts/wechat_html_layout_v1.md
-- 用法：把最终 Markdown 替换 {{FINAL_TEXT}}，让 AI 输出完整 HTML 文件内容；复制粘贴到公众号后台即可。
+- 用法：把最终 Markdown 替换 {{FINAL_TEXT}}，让 AI 输出完整 HTML 文件内容。
+- 当前约定：
+  - 第二步编辑区改为单栏成稿模式：直接面对生成后的全文，不再默认双栏原文对照。
+  - 高优先级操作只保留 3 个：`重新生成全文`、`编辑选中`、`自动补全选中`；`三轮校验 / 清空草稿 / 设置` 下沉为次级入口。
+  - 支持三种排版风格预设：`理性财经版`、`观点评论版`、`深度长文版`。网页里默认选 `理性财经版`，更接近最近对标的公众号样式。
+  - 样式尽量使用内联 style，避免依赖 `<style>` 选择器，提升微信公众号编辑器粘贴保真度。
+  - 页面里的“复制”按钮会优先复制 `<body>` 内的富文本片段，而不是整份 HTML 文档，更适合直接粘贴到公众号后台。
 
 ### 可选：本地自动转换（Markdown → 公众号HTML）
 ```bash
-python3 tools/md_to_wechat_html.py -i output/pop_mart_refined_gpt52.md -o output/pop_mart_refined_gpt52_auto.html
+python3 tools/md_to_wechat_html.py \
+  -i output/pop_mart_refined_gpt52.md \
+  -o output/pop_mart_refined_gpt52_auto.html \
+  --preset rational_finance
 ```
+
+### 可选：Prompt 回归测试
+```bash
+python3 tools/render_prompt.py -t prompts/wechat_rewrite_v2.md -i input/pop_mart_outline_test.txt -o output/pop_mart_outline_test_prompt.md
+```
+用途：用“泡泡玛特提纲式输入”检查改写 prompt 是否会把 bullet points 转成自然文章。
+
+### 可选：二轮修改 Prompt 测试
+```bash
+python3 tools/render_revision_prompt.py -f output/pop_mart_outline_test_verified_gpt54.md --request "整体更克制，减少口号感，结尾补三个可验证变量。" -o output/pop_mart_revision_prompt.md
+```
+用途：检查二轮修改 prompt 是否能按要求修改全文；选中段落模式可用 `--mode selection --target-text selected.md`。
 
 ## 📂 目录结构
 
@@ -77,7 +108,7 @@ python3 tools/md_to_wechat_html.py -i output/pop_mart_refined_gpt52.md -o output
 ## 📝 修订记录
 *   **2026-02-05**: 
     *   **UI 重构**: 升级为 Apple Design 风格界面，提供沉浸式写作体验（Input -> Refine -> Output 三步流）。
-    *   **AI 内置**: 集成 Gemini-3 模型（via yinli.one），支持**流式输出 (Stream)**，打字机效果实时呈现。
+    *   **AI 内置**: 默认接入 OpenAI `gpt-5.4`，支持**流式输出 (Stream)**，打字机效果实时呈现。
     *   **功能优化**: 新增“原始文稿”同步显示，移除冗余工具栏与标签，修复 API 鉴权 (401) 与代理转发问题。
 *   **2026-02-03**: 项目初始化，完成风格分析与核心逻辑构建。
 *   **2026-02-03**: 补充润色提示词：引言保留含义但更顺，并与正文自然衔接。

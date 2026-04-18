@@ -1,7 +1,35 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const url = require('url');
+
+const ROOT_DIR = process.cwd();
+
+const sendJson = (res, statusCode, payload) => {
+    res.writeHead(statusCode, {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Cache-Control': 'no-store',
+    });
+    res.end(JSON.stringify(payload));
+};
+
+const getExpectedAccessToken = () => {
+    return process.env.ARTICLE_JIKE_ACCESS_TOKEN || process.env.APP_ACCESS_TOKEN || '';
+};
+
+const getRequestAccessToken = (req, data = {}) => {
+    const headerToken = req.headers['x-article-jike-access-token'];
+    const authHeader = req.headers.authorization || '';
+    const bearerMatch = authHeader.match(/^Bearer\s+(.+)$/i);
+    return String(headerToken || (bearerMatch && bearerMatch[1]) || data.accessToken || '').trim();
+};
+
+const validateAccessToken = (req, res, data) => {
+    const expected = getExpectedAccessToken();
+    if (!expected) return true;
+    if (getRequestAccessToken(req, data) === expected) return true;
+    sendJson(res, 401, { error: 'Unauthorized', code: 'ACCESS_TOKEN_REQUIRED' });
+    return false;
+};
 
 // 1. Load .env.local manually
 try {
@@ -32,9 +60,11 @@ const handleProxy = async (req, res) => {
     req.on('end', async () => {
         try {
             const data = JSON.parse(body);
-            const baseUrl = data.baseUrl || process.env.NEWAPI_BASE_URL || 'https://api.newapi.pro/v1';
-            const apiKey = data.apiKey || process.env.NEWAPI_API_KEY;
-            const model = data.model;
+            if (!validateAccessToken(req, res, data)) return;
+
+            const baseUrl = data.baseUrl || process.env.OPENAI_BASE_URL || process.env.NEWAPI_BASE_URL || 'https://api.openai.com/v1';
+            const apiKey = data.apiKey || process.env.OPENAI_API_KEY || process.env.NEWAPI_API_KEY;
+            const model = data.model || process.env.OPENAI_MODEL || process.env.NEWAPI_MODEL || 'gpt-5.4';
             const messages = data.messages;
             const isStream = data.stream === true;
 
@@ -48,13 +78,24 @@ const handleProxy = async (req, res) => {
 
             const endpoint = baseUrl.endsWith('/') ? `${baseUrl}chat/completions` : `${baseUrl}/chat/completions`;
             
+            const payload = { model, messages, stream: isStream };
+            if (data.reasoning_effort !== undefined) {
+                payload.reasoning_effort = data.reasoning_effort;
+            } else if (process.env.OPENAI_REASONING_EFFORT) {
+                payload.reasoning_effort = process.env.OPENAI_REASONING_EFFORT;
+            }
+
+            for (const key of ['max_tokens', 'max_completion_tokens', 'temperature', 'top_p']) {
+                if (data[key] !== undefined) payload[key] = data[key];
+            }
+
             const upstream = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${apiKey}`,
                 },
-                body: JSON.stringify({ model, messages, stream: isStream }),
+                body: JSON.stringify(payload),
             });
 
             res.statusCode = upstream.status;
@@ -87,27 +128,53 @@ const handleProxy = async (req, res) => {
 const server = http.createServer((req, res) => {
     console.log(`${req.method} ${req.url}`);
 
+    let pathname;
+    try {
+        pathname = decodeURIComponent(new URL(req.url, `http://${req.headers.host || 'localhost'}`).pathname);
+    } catch (e) {
+        res.writeHead(400);
+        res.end('Bad Request');
+        return;
+    }
+
+    // Lightweight health check for deployments.
+    if (pathname === '/api/status') {
+        const expectedAccessToken = getExpectedAccessToken();
+        return sendJson(res, 200, {
+            ok: true,
+            service: 'article-jike',
+            model: process.env.OPENAI_MODEL || process.env.NEWAPI_MODEL || 'gpt-5.4',
+            reasoningEffort: process.env.OPENAI_REASONING_EFFORT || null,
+            accessControl: Boolean(expectedAccessToken),
+            authorized: !expectedAccessToken || getRequestAccessToken(req) === expectedAccessToken,
+            serverKeyConfigured: Boolean(process.env.OPENAI_API_KEY || process.env.NEWAPI_API_KEY),
+            uptimeSeconds: Math.round(process.uptime()),
+            serverTime: new Date().toISOString(),
+        });
+    }
+
     // Route to Proxy
-    if (req.url === '/api/proxy') {
+    if (pathname === '/api/proxy') {
         return handleProxy(req, res);
     }
 
     // Default to index
-    let filePath = '.' + req.url;
-    if (filePath === './') filePath = './wechat_workflow.html';
+    if (pathname === '/') pathname = '/wechat_workflow.html';
 
-    // Remove query string (e.g. ?ts=123) from file path
-    const queryIndex = filePath.indexOf('?');
-    if (queryIndex !== -1) {
-        filePath = filePath.substring(0, queryIndex);
+    const filePath = path.resolve(ROOT_DIR, `.${pathname}`);
+    if (!filePath.startsWith(`${ROOT_DIR}${path.sep}`)) {
+        res.writeHead(403);
+        res.end('Forbidden');
+        return;
     }
 
     const extname = path.extname(filePath);
-    let contentType = 'text/html';
+    let contentType = 'text/html; charset=utf-8';
     switch (extname) {
-        case '.js': contentType = 'text/javascript'; break;
-        case '.css': contentType = 'text/css'; break;
-        case '.json': contentType = 'application/json'; break;
+        case '.js': contentType = 'text/javascript; charset=utf-8'; break;
+        case '.css': contentType = 'text/css; charset=utf-8'; break;
+        case '.json': contentType = 'application/json; charset=utf-8'; break;
+        case '.md': contentType = 'text/markdown; charset=utf-8'; break;
         case '.png': contentType = 'image/png'; break;
         case '.jpg': contentType = 'image/jpg'; break;
     }
@@ -128,8 +195,9 @@ const server = http.createServer((req, res) => {
     });
 });
 
-const PORT = 3001;
-server.listen(PORT, () => {
-    console.log(`Server running at http://localhost:${PORT}/`);
-    console.log(`Using API Base: ${process.env.NEWAPI_BASE_URL}`);
+const PORT = Number(process.env.PORT || 3001);
+const HOST = process.env.HOST || '0.0.0.0';
+server.listen(PORT, HOST, () => {
+    console.log(`Server running at http://${HOST}:${PORT}/`);
+    console.log(`Using API Base: ${process.env.OPENAI_BASE_URL || process.env.NEWAPI_BASE_URL || 'https://api.openai.com/v1'}`);
 });

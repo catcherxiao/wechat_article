@@ -14,14 +14,19 @@
 1. 在左侧菜单栏点击 **"Environment Variables"**。
 2. 你会看到 "Add New" 的输入框。请依次添加下面**两个**变量：
 
-   **变量 1 (Key):**
-   - **Key**: `NEWAPI_API_KEY`
-   - **Value**: `sk-X9EIfcfBO2CdZL4g37AgBZks22JD9K4PUvgDtnYKqy5e5eFU`
+   **变量 1 (OpenAI Key):**
+   - **Key**: `OPENAI_API_KEY`
+   - **Value**: `<your-openai-api-key>`
    - 点击 **Save** 按钮。
 
    **变量 2 (Base URL):**
-   - **Key**: `NEWAPI_BASE_URL`
-   - **Value**: `https://api.newapi.pro/v1`
+   - **Key**: `OPENAI_BASE_URL`
+   - **Value**: `https://api.openai.com/v1`
+   - 点击 **Save** 按钮。
+
+   **变量 3 (Model):**
+   - **Key**: `OPENAI_MODEL`
+   - **Value**: `gpt-5.4`
    - 点击 **Save** 按钮。
 
 ## 第三步：重新部署 (让配置生效)
